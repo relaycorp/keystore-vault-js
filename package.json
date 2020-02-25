@@ -1,6 +1,6 @@
 {
   "name": "@relaycorp/keystore-vault",
-  "version": "1.0.0",
+  "version": "1.0.0a1",
   "description": "Vault-based Private Key Store extension for server-side, Node.js-based applications implementing Relaynet",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
