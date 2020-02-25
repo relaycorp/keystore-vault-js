@@ -27,7 +27,8 @@ describe('VaultPrivateKeyStore', () => {
   const stubKvPath = 'pohttp-private-keys';
   const stubVaultToken = 'letmein';
 
-  const sessionKeyPairId = '12345';
+  const sessionKeyPairId = Buffer.from([9, 7, 5, 3, 1]);
+  const sessionKeyPairIdBase64 = sessionKeyPairId.toString('base64');
   let sessionKeyPair: CryptoKeyPair;
   let recipientKeyPair: CryptoKeyPair;
   beforeAll(async () => {
@@ -127,7 +128,7 @@ describe('VaultPrivateKeyStore', () => {
 
       expect(mockAxiosClient.post).toBeCalledTimes(1);
       const postCallArgs = mockAxiosClient.post.mock.calls[0];
-      expect(postCallArgs[0]).toEqual(`/${sessionKeyPairId}`);
+      expect(postCallArgs[0]).toEqual(`/${sessionKeyPairIdBase64}`);
     });
 
     test('Private key should be saved', async () => {
@@ -185,7 +186,7 @@ describe('VaultPrivateKeyStore', () => {
           sessionKeyPairId,
           recipientKeyPair.publicKey,
         ),
-        new PrivateKeyStoreError(`Failed to save session key ${sessionKeyPairId}: Denied`),
+        new PrivateKeyStoreError(`Failed to save key: Denied`),
       );
     });
 
@@ -224,9 +225,7 @@ describe('VaultPrivateKeyStore', () => {
           sessionKeyPairId,
           recipientKeyPair.publicKey,
         ),
-        new PrivateKeyStoreError(
-          `Failed to save session key ${sessionKeyPairId}: Vault returned a 400 response`,
-        ),
+        new PrivateKeyStoreError(`Failed to save key: Vault returned a 400 response`),
       );
     });
   });
@@ -272,7 +271,7 @@ describe('VaultPrivateKeyStore', () => {
 
       expect(mockAxiosClient.get).toBeCalledTimes(1);
       const getCallArgs = mockAxiosClient.get.mock.calls[0];
-      expect(getCallArgs[0]).toEqual(`/${sessionKeyPairId}`);
+      expect(getCallArgs[0]).toEqual(`/${sessionKeyPairIdBase64}`);
     });
 
     test('Retrieval should fail if recipient public key does not match secret', async () => {
@@ -316,7 +315,7 @@ describe('VaultPrivateKeyStore', () => {
 
       await expectPromiseToReject(
         store.fetchSessionKey(sessionKeyPairId, recipientKeyPair.publicKey),
-        new PrivateKeyStoreError(`Failed to retrieve session key ${sessionKeyPairId}: Denied`),
+        new PrivateKeyStoreError(`Failed to retrieve key: Denied`),
       );
     });
 
@@ -327,9 +326,7 @@ describe('VaultPrivateKeyStore', () => {
 
       await expectPromiseToReject(
         store.fetchSessionKey(sessionKeyPairId, recipientKeyPair.publicKey),
-        new PrivateKeyStoreError(
-          `Failed to retrieve session key ${sessionKeyPairId}: Vault returned a 204 response`,
-        ),
+        new PrivateKeyStoreError(`Failed to retrieve key: Vault returned a 204 response`),
       );
     });
   });
