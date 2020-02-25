@@ -1,0 +1,16 @@
+src
+build/docs
+*.log
+
+jest.*.js
+**/*.spec.*
+coverage/
+build/**/_test_utils.*
+
+tsconfig*.json
+tslint.json
+.prettierignore
+.editorconfig
+
+.github/
+.circleci/

@@ -1,0 +1,67 @@
+name: Run CI and potentially release
+on:
+  - pull_request:
+  - push:
+      branches-ignore: [gh-pages]
+jobs:
+  ci:
+    strategy:
+      matrix:
+        node: [10, 12]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: npm ci
+      - run: npm run static-checks
+      - run: npm run test:ci:unit
+  release:
+    needs: ci
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: npm ci
+      - run: npm run build
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
+
+      - name: Build documentation
+        run: npm run doc
+      - name: Publish documentation
+        uses: peaceiris/actions-gh-pages@v2.10.1
+        env:
+          # We have to use a deploy key instead of GITHUB_TOKEN :(
+          # https://github.com/peaceiris/actions-gh-pages/issues/9
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: ./build/docs
+        with:
+          emptyCommits: false
+          commitMessage: "${{ github.event.head_commit.message }} [skip ci]"
