@@ -30,7 +30,7 @@ export class VaultPrivateKeyStore extends PrivateKeyStore {
     );
   }
 
-  protected async saveKey(privateKeyData: PrivateKeyData, dhKeyPairId: string): Promise<void> {
+  protected async saveKey(privateKeyData: PrivateKeyData, keyId: string): Promise<void> {
     const dhPrivateKeyBase64 = base64Encode(privateKeyData.keyDer);
     const requestBody = {
       data: {
@@ -39,7 +39,7 @@ export class VaultPrivateKeyStore extends PrivateKeyStore {
         type: privateKeyData.type,
       },
     };
-    const response = await this.axiosClient.post(`/${dhKeyPairId}`, requestBody);
+    const response = await this.axiosClient.post(`/${keyId}`, requestBody);
     if (response.status !== 200 && response.status !== 204) {
       throw new VaultStoreError(`Vault returned a ${response.status} response`);
     }
