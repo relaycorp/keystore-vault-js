@@ -64,9 +64,11 @@ export class VaultPrivateKeyStore extends PrivateKeyStore {
     }
 
     const vaultSecret = response.data.data;
-    const privateKeyDer = base64Decode(vaultSecret.data.privateKey);
+    const certificateDer =
+      vaultSecret.data.certificate && base64Decode(vaultSecret.data.certificate);
     return {
-      keyDer: privateKeyDer,
+      certificateDer,
+      keyDer: base64Decode(vaultSecret.data.privateKey),
       recipientPublicKeyDigest: vaultSecret.data.recipientPublicKeyDigest,
       type: vaultSecret.data.type,
     };

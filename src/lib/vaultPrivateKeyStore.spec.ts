@@ -236,36 +236,24 @@ describe('VaultPrivateKeyStore', () => {
 
   describe('fetchKey', () => {
     const mockAxiosClient = { get: jest.fn(), interceptors: { response: { use: jest.fn() } } };
+
     beforeEach(async () => {
       mockAxiosClient.get.mockReset();
-      mockAxiosClient.get.mockResolvedValueOnce({
-        data: {
-          data: {
-            data: {
-              privateKey: base64Encode(await derSerializePrivateKey(sessionKeyPair.privateKey)),
-              recipientPublicKeyDigest: sha256Hex(
-                await derSerializePublicKey(recipientKeyPair.publicKey),
-              ),
-              type: 'session',
-            },
+      mockAxiosClient.get.mockResolvedValueOnce(
+        makeVaultGETResponse(
+          {
+            privateKey: base64Encode(await derSerializePrivateKey(sessionKeyPair.privateKey)),
+            recipientPublicKeyDigest: sha256Hex(
+              await derSerializePublicKey(recipientKeyPair.publicKey),
+            ),
+            type: 'session-subsequent',
           },
-        },
-        status: 200,
-      });
+          200,
+        ),
+      );
 
       // @ts-ignore
       mockAxiosCreate.mockReturnValueOnce(mockAxiosClient);
-    });
-
-    test('Private key should be returned decoded', async () => {
-      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
-
-      const privateKey = await store.fetchSessionKey(sessionKeyPairId, recipientCertificate);
-
-      expectBuffersToEqual(
-        await derSerializePrivateKey(privateKey),
-        await derSerializePrivateKey(sessionKeyPair.privateKey),
-      );
     });
 
     test('Endpoint path should be the key id', async () => {
@@ -278,20 +266,7 @@ describe('VaultPrivateKeyStore', () => {
       expect(getCallArgs[0]).toEqual(`/${sessionKeyPairId.toString('hex')}`);
     });
 
-    test('Recipient public key should be ignored when session key is initial', async () => {
-      // "Initial" means the key isn't bound to any specific session/recipient
-      mockAxiosClient.get.mockReset();
-      mockAxiosClient.get.mockResolvedValueOnce({
-        data: {
-          data: {
-            data: {
-              privateKey: base64Encode(await derSerializePrivateKey(sessionKeyPair.privateKey)),
-              type: 'session',
-            },
-          },
-        },
-        status: 200,
-      });
+    test('Private key should be returned', async () => {
       const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
 
       const privateKey = await store.fetchSessionKey(sessionKeyPairId, recipientCertificate);
@@ -300,6 +275,62 @@ describe('VaultPrivateKeyStore', () => {
         await derSerializePrivateKey(privateKey),
         await derSerializePrivateKey(sessionKeyPair.privateKey),
       );
+    });
+
+    test('Key type should be returned', async () => {
+      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
+
+      // We can tell the type was returned because it was checked
+      await expect(store.fetchNodeKey(sessionKeyPairId)).rejects.toMatchObject({
+        message: expect.stringMatching(/is not a node key/),
+      });
+    });
+
+    test('Recipient public key should be returned when present', async () => {
+      mockAxiosClient.get.mockReset();
+      mockAxiosClient.get.mockResolvedValueOnce(
+        makeVaultGETResponse(
+          {
+            privateKey: base64Encode(await derSerializePrivateKey(sessionKeyPair.privateKey)),
+            recipientPublicKeyDigest: sha256Hex(
+              await derSerializePublicKey(recipientKeyPair.publicKey),
+            ),
+            type: 'session-subsequent',
+          },
+          200,
+        ),
+      );
+      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
+
+      const differentRecipientKeyPair = await generateRSAKeyPair();
+      const differentRecipientCertificate = await issueEndpointCertificate({
+        issuerPrivateKey: differentRecipientKeyPair.privateKey,
+        subjectPublicKey: differentRecipientKeyPair.publicKey,
+        validityEndDate: TOMORROW,
+      });
+      // We can tell the digest was returned because it was checked:
+      await expect(
+        store.fetchSessionKey(sessionKeyPairId, differentRecipientCertificate),
+      ).rejects.toEqual(new PrivateKeyStoreError('Key is bound to another recipient'));
+    });
+
+    test('Node certificate should be returned when present', async () => {
+      mockAxiosClient.get.mockReset();
+      mockAxiosClient.get.mockResolvedValueOnce(
+        makeVaultGETResponse(
+          {
+            certificate: base64Encode(senderCertificate.serialize()),
+            privateKey: base64Encode(await derSerializePrivateKey(senderPrivateKey)),
+            type: 'node',
+          },
+          200,
+        ),
+      );
+      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
+
+      const keyPair = await store.fetchNodeKey(senderCertificate.getSerialNumber());
+
+      expect(keyPair.certificate.isEqual(senderCertificate)).toBeTrue();
     });
 
     test('Axios errors should be wrapped', async () => {
@@ -323,5 +354,12 @@ describe('VaultPrivateKeyStore', () => {
         new PrivateKeyStoreError(`Failed to retrieve key: Vault returned a 204 response`),
       );
     });
+
+    function makeVaultGETResponse(data: any, status: number): any {
+      return {
+        data: { data: { data } },
+        status,
+      };
+    }
   });
 });
