@@ -8,6 +8,7 @@ import {
   generateRSAKeyPair,
   issueEndpointCertificate,
   PrivateKeyStoreError,
+  UnknownKeyError,
 } from '@relaycorp/relaynet-core';
 import axios, { AxiosRequestConfig } from 'axios';
 import * as http from 'http';
@@ -344,7 +345,17 @@ describe('VaultPrivateKeyStore', () => {
       );
     });
 
-    test('A non-200 response should raise an error', async () => {
+    test('A 404 response should raise an UnknownKeyError', async () => {
+      mockAxiosClient.get.mockReset();
+      mockAxiosClient.get.mockResolvedValueOnce({ status: 404 });
+      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
+
+      await expect(
+        store.fetchSessionKey(sessionKeyPairId, recipientCertificate),
+      ).rejects.toBeInstanceOf(UnknownKeyError);
+    });
+
+    test('Any status other than 200 or 404 should raise a PrivateKeyStoreError', async () => {
       mockAxiosClient.get.mockReset();
       mockAxiosClient.get.mockResolvedValueOnce({ status: 204 });
       const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
