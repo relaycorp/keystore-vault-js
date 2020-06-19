@@ -334,6 +334,15 @@ describe('VaultPrivateKeyStore', () => {
       expect(keyPair.certificate.isEqual(senderCertificate)).toBeTrue();
     });
 
+    test('Axios status validation should be disabled', async () => {
+      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
+
+      await store.fetchSessionKey(sessionKeyPairId, recipientCertificate);
+      await expect(mockAxiosClient.get).toBeCalledWith(expect.anything(), {
+        validateStatus: undefined,
+      });
+    });
+
     test('Axios errors should be wrapped', async () => {
       mockAxiosClient.get.mockReset();
       mockAxiosClient.get.mockRejectedValueOnce(new Error('Denied'));

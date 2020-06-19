@@ -57,7 +57,7 @@ export class VaultPrivateKeyStore extends PrivateKeyStore {
   }
 
   protected async fetchKey(keyId: string): Promise<PrivateKeyData | null> {
-    const response = await this.axiosClient.get(`/${keyId}`);
+    const response = await this.axiosClient.get(`/${keyId}`, { validateStatus: undefined });
 
     if (response.status === 404) {
       return null;
