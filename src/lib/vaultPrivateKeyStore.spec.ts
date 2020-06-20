@@ -339,7 +339,7 @@ describe('VaultPrivateKeyStore', () => {
 
       await store.fetchSessionKey(sessionKeyPairId, recipientCertificate);
       await expect(mockAxiosClient.get).toBeCalledWith(expect.anything(), {
-        validateStatus: undefined,
+        validateStatus: null,
       });
     });
 
