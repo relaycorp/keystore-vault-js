@@ -3,7 +3,6 @@ import {
   BoundPrivateKeyData,
   PrivateKeyData,
   PrivateKeyStore,
-  RelaynetError,
   UnboundPrivateKeyData,
 } from '@relaycorp/relaynet-core';
 import axios, { AxiosInstance } from 'axios';
@@ -12,7 +11,14 @@ import { Agent as HttpsAgent } from 'https';
 
 import { base64Decode, base64Encode } from './utils';
 
-class VaultStoreError extends RelaynetError {}
+class VaultStoreError extends Error {
+  constructor(message: string, responseErrorMessages?: readonly string[]) {
+    const finalErrorMessage = responseErrorMessages
+      ? `${message} (${responseErrorMessages.join(', ')})`
+      : message;
+    super(finalErrorMessage);
+  }
+}
 
 export class VaultPrivateKeyStore extends PrivateKeyStore {
   protected readonly axiosClient: AxiosInstance;
@@ -27,6 +33,7 @@ export class VaultPrivateKeyStore extends PrivateKeyStore {
       httpAgent: new HttpAgent({ keepAlive: true }),
       httpsAgent: new HttpsAgent({ keepAlive: true }),
       timeout: 3000,
+      validateStatus: null as any,
     });
 
     // Sanitize errors to avoid leaking sensitive data, which apparently is a feature:
@@ -52,18 +59,24 @@ export class VaultPrivateKeyStore extends PrivateKeyStore {
     };
     const response = await this.axiosClient.post(`/${keyId}`, requestBody);
     if (response.status !== 200 && response.status !== 204) {
-      throw new VaultStoreError(`Vault returned a ${response.status} response`);
+      throw new VaultStoreError(
+        `Vault returned a ${response.status} response`,
+        response.data.errors,
+      );
     }
   }
 
   protected async fetchKey(keyId: string): Promise<PrivateKeyData | null> {
-    const response = await this.axiosClient.get(`/${keyId}`, { validateStatus: null as any });
+    const response = await this.axiosClient.get(`/${keyId}`);
 
     if (response.status === 404) {
       return null;
     }
     if (response.status !== 200) {
-      throw new VaultStoreError(`Vault returned a ${response.status} response`);
+      throw new VaultStoreError(
+        `Vault returned a ${response.status} response`,
+        response.data.errors,
+      );
     }
 
     const vaultSecret = response.data.data;
