@@ -117,6 +117,10 @@ describe('VaultPrivateKeyStore', () => {
         expect(axiosCreateCallOptions).toHaveProperty('headers.X-Vault-Token', stubVaultToken);
       });
 
+      test('Status validation should be disabled', async () => {
+        expect(axiosCreateCallOptions).toHaveProperty('validateStatus', null);
+      });
+
       test('An error interceptor that removes sensitive data should be registered', async () => {
         const stubError = { message: 'Denied', sensitive: 's3cr3t' };
 
@@ -225,12 +229,26 @@ describe('VaultPrivateKeyStore', () => {
 
     test('A non-200/204 response should raise an error', async () => {
       mockAxiosClient.post.mockReset();
-      mockAxiosClient.post.mockResolvedValueOnce({ status: 400 });
+      mockAxiosClient.post.mockResolvedValueOnce({ status: 400, data: {} });
       const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
 
       await expectPromiseToReject(
         store.saveNodeKey(senderPrivateKey, senderCertificate),
         new PrivateKeyStoreError(`Failed to save key: Vault returned a 400 response`),
+      );
+    });
+
+    test('Error messages in 40X/50X responses should be included in error', async () => {
+      mockAxiosClient.post.mockReset();
+      const errorMessages: ReadonlyArray<any> = ['foo', 'bar'];
+      mockAxiosClient.post.mockResolvedValueOnce({ status: 400, data: { errors: errorMessages } });
+      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
+
+      await expectPromiseToReject(
+        store.saveNodeKey(senderPrivateKey, senderCertificate),
+        new PrivateKeyStoreError(
+          `Failed to save key: Vault returned a 400 response (${errorMessages.join(', ')})`,
+        ),
       );
     });
   });
@@ -334,15 +352,6 @@ describe('VaultPrivateKeyStore', () => {
       expect(keyPair.certificate.isEqual(senderCertificate)).toBeTrue();
     });
 
-    test('Axios status validation should be disabled', async () => {
-      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
-
-      await store.fetchSessionKey(sessionKeyPairId, recipientCertificate);
-      await expect(mockAxiosClient.get).toBeCalledWith(expect.anything(), {
-        validateStatus: null,
-      });
-    });
-
     test('Axios errors should be wrapped', async () => {
       mockAxiosClient.get.mockReset();
       mockAxiosClient.get.mockRejectedValueOnce(new Error('Denied'));
@@ -366,12 +375,26 @@ describe('VaultPrivateKeyStore', () => {
 
     test('Any status other than 200 or 404 should raise a PrivateKeyStoreError', async () => {
       mockAxiosClient.get.mockReset();
-      mockAxiosClient.get.mockResolvedValueOnce({ status: 204 });
+      mockAxiosClient.get.mockResolvedValueOnce({ status: 204, data: {} });
       const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
 
       await expectPromiseToReject(
         store.fetchSessionKey(sessionKeyPairId, recipientCertificate),
         new PrivateKeyStoreError(`Failed to retrieve key: Vault returned a 204 response`),
+      );
+    });
+
+    test('Error messages in 40X/50X responses should be included in error', async () => {
+      mockAxiosClient.get.mockReset();
+      const errorMessages: ReadonlyArray<any> = ['foo', 'bar'];
+      mockAxiosClient.get.mockResolvedValueOnce({ status: 204, data: { errors: errorMessages } });
+      const store = new VaultPrivateKeyStore(stubVaultUrl, stubVaultToken, stubKvPath);
+
+      await expectPromiseToReject(
+        store.fetchSessionKey(sessionKeyPairId, recipientCertificate),
+        new PrivateKeyStoreError(
+          `Failed to retrieve key: Vault returned a 204 response (${errorMessages.join(', ')})`,
+        ),
       );
     });
 
