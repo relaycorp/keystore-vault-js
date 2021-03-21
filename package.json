@@ -65,7 +65,7 @@
     "ts-node": "^8.5.4",
     "tslint": "^5.18.0",
     "typedoc": "^0.16.11",
-    "typescript": "^3.7.4"
+    "typescript": "^3.9.9"
   },
   "dependencies": {
     "@relaycorp/relaynet-core": "^1.27.9",
