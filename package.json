@@ -48,14 +48,13 @@
   "homepage": "https://docs.relaycorp.tech/relaynet-gogrpc-js/",
   "prettier": "@relaycorp/shared-config/.prettierrc.json",
   "publishConfig": {
-    "access": "public",
-    "tag": "dev"
+    "access": "public"
   },
   "devDependencies": {
     "@relaycorp/shared-config": "^1.3.3",
     "@types/jest": "^24.0.15",
     "@types/pkijs": "0.0.2",
-    "@types/verror": "^1.10.3",
+    "@types/verror": "^1.10.4",
     "buffer-to-arraybuffer": "0.0.5",
     "jest": "^24.8.0",
     "jest-extended": "^0.11.2",
