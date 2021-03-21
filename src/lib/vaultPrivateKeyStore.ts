@@ -38,7 +38,7 @@ export class VaultPrivateKeyStore extends PrivateKeyStore {
 
     // Sanitize errors to avoid leaking sensitive data, which apparently is a feature:
     // https://github.com/axios/axios/issues/2602
-    this.axiosClient.interceptors.response.use(undefined, async error =>
+    this.axiosClient.interceptors.response.use(undefined, async (error) =>
       Promise.reject(new Error(error.message)),
     );
   }

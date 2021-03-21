@@ -18,9 +18,7 @@ export function expectBuffersToEqual(
 }
 
 export function sha256Hex(plaintext: ArrayBuffer): string {
-  return createHash('sha256')
-    .update(Buffer.from(plaintext))
-    .digest('hex');
+  return createHash('sha256').update(Buffer.from(plaintext)).digest('hex');
 }
 
 export async function expectPromiseToReject(
