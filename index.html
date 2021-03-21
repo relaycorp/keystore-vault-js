@@ -2382,7 +2382,50 @@ img {
 			<a href="#keystore-vault-js" id="keystore-vault-js" style="color: inherit; text-decoration: none;">
 				<h1>keystore-vault-js</h1>
 			</a>
-			<p>Vault-based Private Key Store extension for server-side, Node.js-based applications implementing Relaynet -- For example, public endpoints.</p>
+			<p><a href="https://www.vaultproject.io">Vault</a>-based Private Key Store extension for server-side, Node.js-based applications implementing Relaynet -- For example, public endpoints.</p>
+			<a href="#install" id="install" style="color: inherit; text-decoration: none;">
+				<h2>Install</h2>
+			</a>
+			<p>This library is available on NPM and the latest version can be installed as follows:</p>
+			<pre><code class="language-shell">npm i @relaycorp/keystore-vault</code></pre>
+			<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
+				<h2>Usage</h2>
+			</a>
+			<a href="#initialisation" id="initialisation" style="color: inherit; text-decoration: none;">
+				<h3>Initialisation</h3>
+			</a>
+			<p>Once you&#39;ve configured Vault, you need to initialise <code>VaultPrivateKeyStore</code> with the following arguments:</p>
+			<ul>
+				<li><code>vaultUrl</code>: The URL to Vault. For example, <code>https://vault.local:8200</code>.</li>
+				<li><code>vaultToken</code>: The auth token.</li>
+				<li><code>kvPath</code>: The path to the KV Secrets Engine. Only Version 2 of the engine is supported.</li>
+			</ul>
+			<a href="#adding-an-identity-key" id="adding-an-identity-key" style="color: inherit; text-decoration: none;">
+				<h3>Adding an identity key</h3>
+			</a>
+			<p>To add an identity key for your own node, use <code>VaultPrivateKeyStore.saveNodeKey();</code>. For example:</p>
+			<pre><code class="language-typescript"><span class="hljs-keyword">await</span> keyStore.saveNodeKey(identityKeyPair.privateKey, identityCertificate);</code></pre>
+			<p><strong>Make sure to store the output of <code>identityCertificate.getSerialNumber()</code></strong> because you&#39;ll need that identifier to retrieve the private key later.</p>
+			<a href="#adding-an-initial-session-key" id="adding-an-initial-session-key" style="color: inherit; text-decoration: none;">
+				<h3>Adding an initial session key</h3>
+			</a>
+			<p>To add an initial session key for your own node, use <code>VaultPrivateKeyStore.saveInitialSessionKey();</code>. For example:</p>
+			<pre><code class="language-typescript"><span class="hljs-keyword">await</span> keyStore.saveInitialSessionKey(sessionKeyPair.privateKey, sessionCertificate);</code></pre>
+			<a href="#signing-a-ramf-message" id="signing-a-ramf-message" style="color: inherit; text-decoration: none;">
+				<h3>Signing a RAMF message</h3>
+			</a>
+			<p>To sign a RAMF message, such as a parcel, retrieve the identity key and pass it to the <code>RAMFMessage.serialize()</code> method. For example:</p>
+			<pre><code class="language-typescript"><span class="hljs-keyword">const</span> privateKey = <span class="hljs-keyword">await</span> keyStore.fetchNodeKey(IDENTITY_KEY_ID);
+<span class="hljs-keyword">const</span> parcelSerialized = <span class="hljs-keyword">await</span> parcel.serialize(privateKey);</code></pre>
+			<a href="#decrypting-a-ramf-message-payload" id="decrypting-a-ramf-message-payload" style="color: inherit; text-decoration: none;">
+				<h3>Decrypting a RAMF message payload</h3>
+			</a>
+			<p>To decrypt the payload of a RAMF message -- for example, to extract the service message from a parcel -- you should simply pass the key store instance to <code>RAMFMessage.unwrapPayload()</code>. For example:</p>
+			<pre><code class="language-typescript"><span class="hljs-keyword">const</span> serviceMessage = <span class="hljs-keyword">await</span> parcel.unwrapPayload(keyStore);</code></pre>
+			<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
+				<h2>API documentation</h2>
+			</a>
+			<p>The API documentation can be found on <a href="https://docs.relaycorp.tech/keystore-vault-js/">docs.relaycorp.tech</a>.</p>
 		</div>
 		<div style="position:relative;"><a name="typedoc-main-index" class="tsd-anchor"></a></div>
 		<section class="tsd-panel-group tsd-index-group">
@@ -2417,7 +2460,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/keystore-vault-js/blob/61dec01/src/lib/utils.ts#L5">src/lib/utils.ts:5</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/keystore-vault-js/blob/4ed1da6/src/lib/utils.ts#L5">src/lib/utils.ts:5</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2440,7 +2483,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/keystore-vault-js/blob/61dec01/src/lib/utils.ts#L1">src/lib/utils.ts:1</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/keystore-vault-js/blob/4ed1da6/src/lib/utils.ts#L1">src/lib/utils.ts:1</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
