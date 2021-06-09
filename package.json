@@ -45,13 +45,13 @@
   "engines": {
     "node": ">=10"
   },
-  "homepage": "https://docs.relaycorp.tech/relaynet-gogrpc-js/",
+  "homepage": "https://docs.relaycorp.tech/keystore-vault-js/",
   "prettier": "@relaycorp/shared-config/.prettierrc.json",
   "publishConfig": {
     "access": "public"
   },
   "devDependencies": {
-    "@relaycorp/shared-config": "^1.4.13",
+    "@relaycorp/shared-config": "^1.4.15",
     "@types/jest": "^26.0.23",
     "@types/verror": "^1.10.4",
     "buffer-to-arraybuffer": "0.0.6",
