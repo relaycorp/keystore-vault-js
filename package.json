@@ -45,7 +45,7 @@
   "engines": {
     "node": ">=10"
   },
-  "homepage": "https://docs.relaycorp.tech/relaynet-gogrpc-js/",
+  "homepage": "https://docs.relaycorp.tech/keystore-vault-js/",
   "prettier": "@relaycorp/shared-config/.prettierrc.json",
   "publishConfig": {
     "access": "public"
